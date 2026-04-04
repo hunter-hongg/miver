@@ -8,6 +8,6 @@ import (
 func DealError(err error) {
 	if err != nil {
 		out.Error(err.Error())
-		os.Exit(2)
+		os.Exit(0)
 	}
 }
