@@ -62,6 +62,14 @@ to quickly create a Cobra application.`,
 			miver_lib := fmt.Sprintf("%s/lib", miver_home)
 			miver_lib_std := fmt.Sprintf("%s/lib/.std", miver_home)
 
+      remov := exec.Command(
+				"rm", "-rf", 
+				miver_lib,
+			)
+
+			err := remov.Run()
+			errs.DealError(err)
+
 			os.MkdirAll(miver_bin, 0755)
 			os.MkdirAll(miver_lib, 0755)
 
@@ -70,7 +78,7 @@ to quickly create a Cobra application.`,
 				fmt.Sprintf("%s/%s/bin/miva-linux", miva_repo, version),
 				fmt.Sprintf("%s/miva", miver_bin),
 			)
-			err := lnToBin.Run()
+			err = lnToBin.Run()
 			errs.DealError(err)
 			out.Info(fmt.Sprintf("miva binary linked to %s", miver_bin))
 
