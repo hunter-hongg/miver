@@ -1,129 +1,99 @@
-/*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"fmt"
-	"miver/internal/csvr"
-	"miver/internal/system"
-	"miver/pkg/color"
-	_ "miver/pkg/color"
-	"miver/pkg/out"
+	"miver/internal/miva"
+	"miver/pkg/cli"
 	"os"
 	"runtime"
 
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "List available Miva versions",
+	Long:  "Display all available Miva versions from the local repository in a formatted table.",
 	Run: func(cmd *cobra.Command, args []string) {
-		if runtime.GOOS == "linux" {
-			home := os.Getenv("HOME")
-			miver_home := fmt.Sprintf("%s/.miver", home)
-			miver_repo := fmt.Sprintf("%s/repo", miver_home)
-			miva_repo := fmt.Sprintf("%s/miva", miver_repo)
-			if res, err := system.DirExists(miva_repo); err == nil && res {
-				lists := csvr.ReadAvailable(miva_repo)
+		if runtime.GOOS != "linux" {
+			return
+		}
 
-				out.Info("Listing available versions...\n")
+		paths := miva.NewPaths(os.Getenv("HOME"))
+		exists, err := miva.DirExists(paths.Miva)
+		if err != nil {
+			cli.Fatal(err)
+		}
+		if !exists {
+			cli.Fatal(fmt.Errorf("Miva repository not found at %s. Please run 'miver init' first", paths.Miva))
+		}
 
-				var (
-					versionMax int
-					animalMax  int
-					timeMax    int
-				)
-				dealMax := func(max int, cur string) int {
-					l := len(cur)
-					if l > max {
-						return l
-					} else {
-						return max
-					}
-				}
-				toMax := func(max int, cur string) string {
-					return fmt.Sprintf("%-*s", max, cur)
-				}
-				cpStr := func(times int, s string) string {
-					ss := ""
-					for i := 0; i < times; i++ {
-						ss += s
-					}
-					return ss
-				}
-				for _, list := range lists {
-					version := list[0]
-					animal := list[1]
-					time := list[2]
-					versionMax = dealMax(versionMax, version)
-					animalMax = dealMax(animalMax, animal)
-					timeMax = dealMax(timeMax, time)
-				}
-				versionMax = dealMax(versionMax, "Version")
-				animalMax = dealMax(animalMax, "Version Codename")
-				timeMax = dealMax(timeMax, "Release Time")
-				outFg := fmt.Sprintf(
-					"+-%s-+-%s-+-%s-+",
-					cpStr(versionMax, "-"),
-					cpStr(animalMax, "-"),
-					cpStr(timeMax, "-"),
-				)
-				outFgN := fmt.Sprintf(
-					"%s\n",
-					outFg,
-				)
-				fmt.Print(color.Cyan(
-					outFgN +
-						fmt.Sprintf(
-							"| %s | %s | %s |\n",
-							toMax(versionMax, "Version"),
-							toMax(animalMax, "Version Codename"),
-							toMax(timeMax, "Release Time"),
-						) +
-						outFgN,
-				))
-				for _, list := range lists {
-					version := list[0]
-					animal := list[1]
-					time := list[2]
-					fmt.Println(color.Cyan(
-						fmt.Sprintf(
-							"| %s | %s | %s |\n",
-							toMax(versionMax, version),
-							toMax(animalMax, animal),
-							toMax(timeMax, time),
-						) + outFg,
-					))
-				}
-			} else {
-				out.Error(fmt.Sprintf(
-					"Miva repository does not exist at %s. Please run 'miver init' first.",
-					miva_repo,
-				))
+		versions, err := miva.AvailableVersions(paths.Miva)
+		if err != nil {
+			cli.Fatal(err)
+		}
+
+		// Calculate column widths
+		widths := [3]int{len("Version"), len("Version Codename"), len("Release Time")}
+		for _, v := range versions {
+			if l := len(v[0]); l > widths[0] {
+				widths[0] = l
+			}
+			if l := len(v[1]); l > widths[1] {
+				widths[1] = l
+			}
+			if l := len(v[2]); l > widths[2] {
+				widths[2] = l
 			}
 		}
+
+		// Box-drawing characters
+		const (
+			horz = "═"
+			vert = "║"
+
+			topL = "╔"
+			topS = "╦"
+			topR = "╗"
+			midL = "╠"
+			midS = "╬"
+			midR = "╣"
+			botL = "╚"
+			botS = "╩"
+			botR = "╝"
+		)
+
+		// Build separator lines
+		col := func(n int) string {
+			return repeat(n+2, horz)
+		}
+		topBorder := topL + col(widths[0]) + topS + col(widths[1]) + topS + col(widths[2]) + topR
+		midBorder := midL + col(widths[0]) + midS + col(widths[1]) + midS + col(widths[2]) + midR
+		botBorder := botL + col(widths[0]) + botS + col(widths[1]) + botS + col(widths[2]) + botR
+
+		rowFmt := fmt.Sprintf("%s %%-%ds %s %%-%ds %s %%-%ds %s", vert, widths[0], vert, widths[1], vert, widths[2], vert)
+
+		// Render table
+		fmt.Println()
+		fmt.Println(cli.Cyan(topBorder))
+		fmt.Println(cli.Magenta(fmt.Sprintf(rowFmt, "Version", "Version Codename", "Release Time")))
+		fmt.Println(cli.Cyan(midBorder))
+		for _, v := range versions {
+			fmt.Println(cli.Cyan(fmt.Sprintf(rowFmt, v[0], v[1], v[2])))
+		}
+		fmt.Println(cli.Cyan(botBorder))
+		fmt.Println()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(listCmd)
+}
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func repeat(n int, s string) string {
+	r := make([]byte, n)
+	for i := range r {
+		r[i] = s[0]
+	}
+	return string(r)
 }
