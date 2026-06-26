@@ -19,13 +19,13 @@ const (
 	cyan    = "\033[36m"
 )
 
-// Symbols used in output
+// Symbols used in output (ASCII-only for broad terminal compatibility)
 const (
-	symSuccess = "✔"
-	symInfo    = "ℹ"
-	symWarning = "⚡"
-	symError   = "✘"
-	symStep    = "◆"
+	symSuccess = "*"
+	symInfo    = "i"
+	symWarning = "!"
+	symError   = "x"
+	symStep    = ">"
 )
 
 func colorize(text, color string) string {

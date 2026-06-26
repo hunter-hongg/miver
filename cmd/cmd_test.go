@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -34,31 +33,6 @@ func TestCheckPlatform(t *testing.T) {
 				if err != nil {
 					t.Errorf("checkPlatform(%q) returned unexpected error: %v", tt.goos, err)
 				}
-			}
-		})
-	}
-}
-
-func TestRepeat(t *testing.T) {
-	tests := []struct {
-		name string
-		n    int
-		s    string
-		want string
-	}{
-		{"zero length", 0, "-", ""},
-		{"one dash", 1, "-", "-"},
-		{"five dashes", 5, "-", "-----"},
-		{"custom char", 3, "=", "==="},
-		{"multi-char pattern", 2, "ab", "aa"}, // repeat only uses first char
-		{"large pattern", 100, "-", strings.Repeat("-", 100)},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := repeat(tt.n, tt.s)
-			if got != tt.want {
-				t.Errorf("repeat(%d, %q) = %q, want %q", tt.n, tt.s, got, tt.want)
 			}
 		})
 	}

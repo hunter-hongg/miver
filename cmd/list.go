@@ -6,6 +6,7 @@ import (
 	"miver/pkg/cli"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -47,29 +48,20 @@ var listCmd = &cobra.Command{
 			}
 		}
 
-		// Box-drawing characters
+		// ASCII box-drawing characters (no Unicode, broad terminal compatibility)
 		const (
-			horz = "═"
-			vert = "║"
-
-			topL = "╔"
-			topS = "╦"
-			topR = "╗"
-			midL = "╠"
-			midS = "╬"
-			midR = "╣"
-			botL = "╚"
-			botS = "╩"
-			botR = "╝"
+			horz = "-"
+			vert = "|"
+			plus = "+"
 		)
 
 		// Build separator lines
 		col := func(n int) string {
-			return repeat(n+2, horz)
+			return strings.Repeat(horz, n+2)
 		}
-		topBorder := topL + col(widths[0]) + topS + col(widths[1]) + topS + col(widths[2]) + topR
-		midBorder := midL + col(widths[0]) + midS + col(widths[1]) + midS + col(widths[2]) + midR
-		botBorder := botL + col(widths[0]) + botS + col(widths[1]) + botS + col(widths[2]) + botR
+		topBorder := plus + col(widths[0]) + plus + col(widths[1]) + plus + col(widths[2]) + plus
+		midBorder := plus + col(widths[0]) + plus + col(widths[1]) + plus + col(widths[2]) + plus
+		botBorder := plus + col(widths[0]) + plus + col(widths[1]) + plus + col(widths[2]) + plus
 
 		rowFmt := fmt.Sprintf("%s %%-%ds %s %%-%ds %s %%-%ds %s", vert, widths[0], vert, widths[1], vert, widths[2], vert)
 
@@ -88,12 +80,4 @@ var listCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(listCmd)
-}
-
-func repeat(n int, s string) string {
-	r := make([]byte, n)
-	for i := range r {
-		r[i] = s[0]
-	}
-	return string(r)
 }
